@@ -127,61 +127,150 @@ const App: React.FC = () => {
       {/* Main Content */}
       <main className="flex-grow flex flex-col md:flex-row max-w-6xl mx-auto w-full p-4 gap-6">
         
-        {/* Left Sidebar: Controls (Hidden on Print) */}
-        <aside className="w-full md:w-1/3 lg:w-1/4 bg-white p-6 rounded-xl shadow-lg h-fit no-print">
-          <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Configurar Tarefa</h2>
+        {/* Left Sidebar: Controls & Premium Card (Hidden on Print) */}
+        <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col gap-6 no-print">
           
-          <form onSubmit={handleGenerate} className="flex flex-col gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Disciplina</label>
-              <select 
-                value={subject} 
-                onChange={(e) => setSubject(e.target.value as Subject)}
-                className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+          {/* Config Card */}
+          <aside className="bg-white p-6 rounded-xl shadow-lg h-fit">
+            <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Configurar Tarefa</h2>
+            
+            <form onSubmit={handleGenerate} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Disciplina</label>
+                <select 
+                  value={subject} 
+                  onChange={(e) => setSubject(e.target.value as Subject)}
+                  className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                >
+                  {Object.values(Subject).map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Ano Escolar</label>
+                <select 
+                  value={grade} 
+                  onChange={(e) => setGrade(e.target.value as Grade)}
+                  className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                >
+                  {Object.values(Grade).map(g => <option key={g} value={g}>{g}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tópico / Tema</label>
+                <input 
+                  type="text" 
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="Ex: Encontros Consonantais do R"
+                  className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={loading}
+                className={`w-full py-3 rounded-lg font-bold text-white transition shadow-md 
+                  ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
               >
-                {Object.values(Subject).map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
+                {loading ? 'Gerando...' : 'Gerar Tarefa'}
+              </button>
+
+              {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
+            </form>
+
+            <div className="mt-6 pt-4 border-t text-sm text-gray-500">
+              <p>Limite: 1 tarefa grátis/dia.</p>
             </div>
+          </aside>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Ano Escolar</label>
-              <select 
-                value={grade} 
-                onChange={(e) => setGrade(e.target.value as Grade)}
-                className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-              >
-                {Object.values(Grade).map(g => <option key={g} value={g}>{g}</option>)}
-              </select>
-            </div>
+          {/* Premium Card Sidebar - Visible if not premium */}
+          {!paymentState.isPremium && (
+            <aside className="bg-white p-6 rounded-xl shadow-lg h-fit border border-yellow-200 relative overflow-hidden">
+               <div className="absolute top-0 right-0 bg-yellow-400 text-blue-900 text-[10px] font-bold px-2 py-1 rounded-bl-lg shadow-sm">
+                 PREMIUM
+               </div>
+               <div className="flex flex-col items-center">
+                  <h3 className="text-lg font-bold text-gray-800 mb-4">Seja Premium</h3>
+                  
+                  {/* QR Code */}
+                  <div className="bg-white p-2 border rounded-lg mb-4 shadow-inner">
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(getPixKey())}`} 
+                      alt="QR Code PIX" 
+                      className="w-32 h-32"
+                     />
+                  </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tópico / Tema</label>
-              <input 
-                type="text" 
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                placeholder="Ex: Encontros Consonantais do R"
-                className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-            </div>
+                  {/* PIX Key Copy */}
+                  <div className="w-full mb-4">
+                     <div className="flex gap-2">
+                       <input 
+                        readOnly 
+                        value={getPixKey()} 
+                        className="text-xs bg-gray-50 border p-2 rounded-l-lg w-full truncate text-gray-500 outline-none"
+                       />
+                       <button onClick={copyPix} className="bg-blue-100 text-blue-700 px-3 rounded-r-lg font-bold text-xs hover:bg-blue-200 border-t border-b border-r border-blue-100">
+                         Copiar
+                       </button>
+                     </div>
+                  </div>
 
-            <button 
-              type="submit" 
-              disabled={loading}
-              className={`w-full py-3 rounded-lg font-bold text-white transition shadow-md 
-                ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
-            >
-              {loading ? 'Gerando...' : 'Gerar Tarefa'}
-            </button>
+                  {/* Upload Receipt */}
+                  <div className="w-full mb-4">
+                    <label className="block text-xs font-bold text-gray-700 mb-2">
+                      Envie o comprovante:
+                    </label>
+                    <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-3 bg-gray-50 hover:bg-white transition-colors text-center cursor-pointer group">
+                       <input 
+                        type="file" 
+                        accept="image/*,.pdf"
+                        onChange={(e) => setReceiptFile(e.target.files ? e.target.files[0] : null)}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      {receiptFile ? (
+                         <div className="flex items-center justify-center gap-2 text-green-600 font-medium text-xs break-all">
+                            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                            <span className="truncate">{receiptFile.name}</span>
+                         </div>
+                      ) : (
+                         <div className="flex flex-col items-center gap-1 text-gray-500 group-hover:text-gray-700">
+                            <span className="text-xs">Clique para anexar</span>
+                         </div>
+                      )}
+                    </div>
+                  </div>
 
-            {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
-          </form>
+                  {/* Action Button */}
+                  <button 
+                    onClick={handleSendReceipt}
+                    disabled={!receiptFile || isSending}
+                    className={`w-full py-2 rounded-lg font-bold text-white text-sm transition flex justify-center items-center gap-2 mb-4
+                      ${!receiptFile || isSending ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 shadow-md'}`}
+                  >
+                    {isSending ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Enviando...
+                      </>
+                    ) : 'Enviar Comprovante'}
+                  </button>
 
-          <div className="mt-6 pt-4 border-t text-sm text-gray-500">
-            <p>Limite: 1 tarefa grátis/dia.</p>
-            <p>Ilimitado por 30 dias com taxa de R$ 1,00.</p>
-          </div>
-        </aside>
+                  {/* Footer Message */}
+                  <div className="bg-yellow-50 p-2 rounded text-center border border-yellow-100 w-full">
+                    <p className="text-xs text-gray-700 font-semibold leading-tight">
+                      Ajude com R$1,00 Real para gerar atividades sem limites por 30 dias
+                    </p>
+                  </div>
+               </div>
+            </aside>
+          )}
+
+        </div>
 
         {/* Right Area: Preview */}
         <section className="w-full md:w-2/3 lg:w-3/4 flex flex-col items-center">
@@ -221,10 +310,10 @@ const App: React.FC = () => {
         </section>
       </main>
 
-      {/* Payment Modal */}
+      {/* Payment Modal (Triggered by Generate Button if limit reached) */}
       {showPaymentModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 no-print">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in">
             <div className="bg-blue-600 p-4 text-white text-center">
               <h3 className="text-xl font-bold">Acesso Ilimitado por 30 dias</h3>
             </div>
@@ -254,7 +343,7 @@ const App: React.FC = () => {
                  </div>
               </div>
 
-              {/* Receipt Upload Section */}
+              {/* Receipt Upload Section in Modal */}
               <div className="mt-2">
                 <label className="block text-sm font-bold text-gray-700 mb-2">
                   Envie o comprovante para liberar:
