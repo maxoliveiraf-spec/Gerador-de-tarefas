@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
-import { Subject, Grade, GeneratedTask } from '../types';
+import { Subject, GeneratedTask, EducationLevel } from '../types';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -39,19 +39,25 @@ const taskSchema: Schema = {
 
 export const generateSchoolTask = async (
   subject: Subject,
-  grade: Grade,
+  level: EducationLevel,
+  grade: string,
   topic: string
 ): Promise<GeneratedTask> => {
   
   const prompt = `
-    Você é um pedagogo especialista em educação fundamental no Brasil (BNCC).
+    Você é um pedagogo especialista em educação no Brasil (BNCC).
     Crie uma atividade escolar pronta para imprimir.
     
+    Nível de Ensino: ${level}
     Disciplina: ${subject}
-    Ano Escolar: ${grade}
+    Ano/Série: ${grade}
     Tópico: ${topic}
     
-    A atividade deve ser adequada para a idade, lúdica e educativa.
+    Diretrizes:
+    1. A atividade deve ser adequada para a faixa etária e nível cognitivo selecionado.
+    2. Para Educação Infantil: Use linguagem simples, lúdica e foque em desenho ou identificação visual.
+    3. Para Ensino Médio: Use linguagem mais formal, questões mais complexas e conteudistas (vestibular/ENEM).
+    4. Para Ensino Fundamental: Equilibre o lúdico com o conteúdo.
     
     Para exercícios do tipo 'column_sort' (separar em colunas), forneça uma lista de palavras misturadas em 'items' e os nomes das categorias em 'columns'.
     Para exercícios de 'fill_in_blanks', use '___' para o espaço.
@@ -76,6 +82,7 @@ export const generateSchoolTask = async (
     return {
       ...data,
       grade,
+      level,
       subject,
       topic
     };

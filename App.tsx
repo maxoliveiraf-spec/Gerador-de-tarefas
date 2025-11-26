@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Subject, Grade, GeneratedTask, PaymentState } from './types';
+import { Subject, Grade, GeneratedTask, PaymentState, EducationLevel, EDUCATION_STRUCTURE } from './types';
 import { generateSchoolTask } from './services/geminiService';
 import { canGenerateTask, recordGeneration, getPaymentState, activatePremium, getPixKey } from './services/paymentService';
 import { Worksheet } from './components/Worksheet';
 
 const App: React.FC = () => {
   // State
+  const [educationLevel, setEducationLevel] = useState<EducationLevel>(EducationLevel.FUNDAMENTAL);
   const [subject, setSubject] = useState<Subject>(Subject.PORTUGUESE);
-  const [grade, setGrade] = useState<Grade>(Grade.FIRST);
+  const [grade, setGrade] = useState<Grade>(EDUCATION_STRUCTURE[EducationLevel.FUNDAMENTAL][0]);
   const [topic, setTopic] = useState<string>('');
+  
   const [loading, setLoading] = useState(false);
   const [task, setTask] = useState<GeneratedTask | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -22,6 +24,11 @@ const App: React.FC = () => {
   useEffect(() => {
     setPaymentState(getPaymentState());
   }, []);
+
+  // Update grade when level changes to default to the first grade of that level
+  useEffect(() => {
+    setGrade(EDUCATION_STRUCTURE[educationLevel][0]);
+  }, [educationLevel]);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +46,7 @@ const App: React.FC = () => {
 
     setLoading(true);
     try {
-      const result = await generateSchoolTask(subject, grade, topic);
+      const result = await generateSchoolTask(subject, educationLevel, grade, topic);
       setTask(result);
       recordGeneration();
       setPaymentState(getPaymentState()); // Update state to reflect usage
@@ -135,6 +142,33 @@ const App: React.FC = () => {
             <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Configurar Tarefa</h2>
             
             <form onSubmit={handleGenerate} className="flex flex-col gap-4">
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nível de Ensino</label>
+                <select 
+                  value={educationLevel} 
+                  onChange={(e) => setEducationLevel(e.target.value as EducationLevel)}
+                  className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                >
+                  {Object.values(EducationLevel).map(level => (
+                    <option key={level} value={level}>{level}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Ano Escolar</label>
+                <select 
+                  value={grade} 
+                  onChange={(e) => setGrade(e.target.value as Grade)}
+                  className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                >
+                  {EDUCATION_STRUCTURE[educationLevel].map((g) => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
+                </select>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Disciplina</label>
                 <select 
@@ -147,23 +181,12 @@ const App: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ano Escolar</label>
-                <select 
-                  value={grade} 
-                  onChange={(e) => setGrade(e.target.value as Grade)}
-                  className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                >
-                  {Object.values(Grade).map(g => <option key={g} value={g}>{g}</option>)}
-                </select>
-              </div>
-
-              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Tópico / Tema</label>
                 <input 
                   type="text" 
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
-                  placeholder="Ex: Encontros Consonantais do R"
+                  placeholder="Ex: Frações, Cores, Revolução..."
                   className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
                 />
               </div>
